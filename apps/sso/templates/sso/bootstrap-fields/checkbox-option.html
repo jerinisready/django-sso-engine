@@ -1,0 +1,5 @@
+        <div class="{{ option.attrs.class }} form-check form-switch">
+            <!-- ** {{option|safe}} -->
+            <input class="form-check-input"  type="{{ option.type }}" name="{{ option.name }}"{% if option.value != None %} value="{{ option.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+            <label class="form-check-label" for="{{ option.attrs.id }}">{{ option.label }}</label>
+        </div>

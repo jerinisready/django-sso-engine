@@ -18,6 +18,9 @@ class Client(models.Model):
     app_key = models.CharField(max_length=200)
     app_secret = models.CharField(max_length=200)
 
+    logo = models.ImageField(upload_to='client-logo/', null=True, blank=True)
+    login_description = models.TextField(help_text="Anything to display at login page", null=True, blank=True)
+    permission_description = models.TextField(help_text="Anything to display at permission page", null=True, blank=True)
     responsibility_bearer = models.CharField(max_length=200, null=True)
     required_features = models.ManyToManyField('sso.Feature', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -30,7 +33,7 @@ class Client(models.Model):
 
     @classmethod
     def get_with_key(cls, api_key, app_secret=None):
-        qs = cls.objects.filter(api_key=api_key)
+        qs = cls.objects.filter(app_key=api_key)
         if app_secret:
             qs = qs.filter(app_secret=app_secret)
         return qs.first()
@@ -40,6 +43,9 @@ class Client(models.Model):
             self.app_key = "key_" + str(uuid4())
         if not self.app_secret:
             self.app_secret = "secret_"+ str(uuid4())
+
+    def __str__(self):
+        return self.name
 
 
 STATE_CHOICES = [
@@ -60,7 +66,7 @@ class Feature(models.Model):
     code = models.CharField(max_length=100, primary_key=True)
 
     def __str__(self):
-        return self.code
+        return f'{self.name} ({self.code})'
 
 
 class AccessAgreement(models.Model):
@@ -81,6 +87,11 @@ class AccessAgreement(models.Model):
     signed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def sign(self):
+        self.is_signed = True
+        self.signed_at = timezone.now()
+        self.save()
 
     class Meta:
         unique_together = ('client', 'user',)
@@ -109,7 +120,7 @@ class AuthTransaction(models.Model):
         super().save(**kwargs)
 
     def generate_token(self):
-        self.txn_token = "txn_" + str(uuid4())[:16]
+        self.txn_token = "txn-" + str(uuid4())[:32]
 
     def set_state(self, to_state):
         if to_state in settings.SSO_STATE_TRANSACTIONS[self.state]:
@@ -117,11 +128,11 @@ class AuthTransaction(models.Model):
             self.state = to_state
             self.set_log(cp, self.state)
             self.save()
-        else:
-            a = settings.SSO_STATE_LABELS[self.state]
-            b = settings.SSO_STATE_LABELS[to_state]
-            term_directly = ('directly' if self.state < to_state else '')
-            raise Exception(f"Invalid transaction: Could not update from {a} to {b} {term_directly}")
+        # else:
+        #     a = settings.SSO_STATE_LABELS[self.state]
+        #     b = settings.SSO_STATE_LABELS[to_state]
+        #     term_directly = ('directly' if self.state < to_state else '')
+        #     raise Exception(f"Invalid transaction: Could not update from {a} to {b} {term_directly}")
 
     def set_log(self, prev, curr):
         AuthTransactionLog.objects.create(txn=self, prev=prev, curr=curr)
@@ -134,14 +145,9 @@ class AuthTransaction(models.Model):
     @classmethod
     def generate_txn(cls, client, user=None, state=AUTH_REQ):
         agreement, _is_created = AccessAgreement.objects.get_or_create(client=client, user=user)
-        self = cls(user=user, state=state, agreement=agreement)
+        self = cls(state=state, agreement=agreement)
         self.save()
         return self
-
-    def sign(self):
-        self.is_signed = True
-        self.signed_at = timezone.utils.now()
-        self.save()
 
 
 class AuthTransactionLog(models.Model):

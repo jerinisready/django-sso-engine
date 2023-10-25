@@ -114,6 +114,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
 
+######  SSO DEFAULTS  ######
+
+SSO_AUTH_TIMEOUT = {'minutes': 8}       # follows params for timedelta
+
 # SSO TRANSACTIONS
 AUTH_REQ = 1
 AUTH_LOGIN = 2

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>{% block page_title %}{% endblock %}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% block bootstrap_import %}
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% endblock %}
+    <style>
+        /* STYLE SSO ENGINE WEBPACK */
+        :root {
+          --sso-primary-color: #1e90ff;
+          --sso-text-color: #ffffff;
+          --sso-width: 630px;
+        }
+        .ssoengine-body {background-color: #eee}
+        .ssoengine-container { width: 100%; max-width: var(--sso-width); background-color: #fff}
+        .ssoengine-container .sso-header-col{ overflow:hidden; clear: both; }
+
+    </style>
+</head>
+<body class="ssoengine-body">
+
+<div class="container ssoengine-container rounded shadow mt-4" >
+  <div class="row">
+    <div class="col-12 sso-header-col  p-4 text-center">
+        {% block sso_header_col %}
+        {% endblock %}
+    </div>
+    <div class="col-12 text-dark px-5">
+        {% block sso_body_col %}
+        {% endblock %}
+    </div>
+  </div>
+</div>
+</div>
+
+</body>
+</html>

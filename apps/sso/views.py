@@ -1,10 +1,13 @@
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from django.views import View
 from django.views.generic import RedirectView
 from django.views.generic.edit import ProcessFormView, ModelFormMixin, UpdateView
 
 from apps.sso.facade import SSOService
+from apps.sso.forms import AccessAgreementPermissionForm
 from apps.sso.models import Client, AuthTransaction, AccessAgreement
 
 
@@ -15,14 +18,14 @@ class WebSSO(ModelFormMixin, LoginView, ProcessFormView, ):
     template_name = 'sso/web-login.html'
 
     def get_object(self, queryset=None):
-        return Client.get_with_key(self.request.GET['apikey'])
+        return Client.get_with_key(self.kwargs['apikey'])
 
     def invalid_api_key(self):
         return render(self.request, 'sso/invalid_vendor_configuration.html')
 
     def get_context_data(self, **kwargs):
         cxt = super().get_context_data(**kwargs)
-        cxt['client'] = self.client
+        cxt['sso_client'] = self.client
         return cxt
 
     def get(self, request, *args, **kwargs):
@@ -30,11 +33,9 @@ class WebSSO(ModelFormMixin, LoginView, ProcessFormView, ):
         Usually, other system allows authentication, even when we donot have a client, and will redirect to native dashboard.
         Since we are concentrating only on authentication service, we
         """
-        if 'apikey' not in request.GET:
-            return self.invalid_api_key()
         self.client = self.get_object()
         if self.request.user.is_authenticated:
-            return self.next_level(user=self.request.user, has_already_completed=True)
+            return redirect(self.next_level(user=self.request.user, has_already_completed=True))
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -62,19 +63,31 @@ class WebSSO(ModelFormMixin, LoginView, ProcessFormView, ):
 
 class WebSSOPermissionUpdateView(UpdateView):
     model = AccessAgreement
-    fields = ('permissions', )
+    # fields = ('permissions', )
+    form_class = AccessAgreementPermissionForm
+    template_name = 'sso/web-confirm-permissions.html'
 
     def get_object(self, queryset=None):
         return self.service.txn.agreement
 
     def get(self, request, *args, **kwargs):
         self.service = SSOService(**kwargs)
-        if self.service.txn.is_signed is True:
+        if self.service.txn.agreement.is_signed is True:
             """
             Transaction signed means, the user is already updated the permissions on his will.
             """
             return redirect(self.next_level(has_already_completed=True))
         return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.service = SSOService(**kwargs)
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        cxt = super().get_context_data(**kwargs)
+        cxt['sso_agent'] = self.service
+        cxt['sso_client'] = self.service.client
+        return cxt
 
     def form_valid(self, form):
         form.save()
@@ -100,6 +113,22 @@ class WebSSORedirectView(RedirectView):
 
     def get_redirect_url(self, *args, **kwargs):
         return self.service.redirection_url()
+
+
+class WebSSOAPIView(View):
+
+    def get_client(self):
+        return Client.get_with_key(
+            self.request.headers.get('X-ApiKey'),
+            self.request.headers.get('X-ApiSecret')
+        )
+
+    def get(self, request, *args, **kwargs):
+        self.client = self.get_client()
+        self.service = SSOService(**kwargs)
+        data, status = self.service.serialize_for_client(client=self.client, txn_id=self.kwargs['txn_token'])
+        print(data)
+        return JsonResponse(data, status=status)
 
 
 

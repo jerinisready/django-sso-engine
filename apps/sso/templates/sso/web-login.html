@@ -1,0 +1,21 @@
+{% extends 'ssoengine.base.html'  %}
+
+{% block sso_header_col %}
+    <img src="https://www.mindcentric.com/hubfs/SingleSignOn.png" alt="" height="120" width="auto">
+    <h1>Sign in</h1>
+    <p>with your Organization Account</p>
+{% endblock %}
+
+
+{% block sso_body_col %}
+<form action="">
+    {% csrf_token %}
+    {{ form }}
+    <p>
+        <a class="link-primary"  href="">Forget Password?</a>
+    </p>
+    <div class="form-row">
+        <input type="submit" value="Next" class="btn btn-primary float-right d-inline">
+    </div>
+</form>
+{% endblock %}

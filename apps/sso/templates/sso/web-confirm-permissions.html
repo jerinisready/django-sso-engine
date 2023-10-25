@@ -1,0 +1,31 @@
+{% extends 'ssoengine.base.html'  %}
+
+{% block sso_header_col %}
+    <img src="https://www.mindcentric.com/hubfs/SingleSignOn.png" alt="" height="120" width="auto">
+    <h4><span class="text-primary">{{ sso_client.name }}</span> wants to access your Organization Account.</h4>
+    <p><span class="badge bg-primary text-white">@{{ sso_agent.user.username }}</span></p>
+{% endblock %}
+
+
+{% block sso_body_col %}
+<div class="text-left px-5">
+<p class="text-left">This will allow <span class="text-primary">{{ sso_client.name }}</span> to access:</p>
+
+<form action="" method="post" class="pb-3">
+    <div class="px-4">
+<!--        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckChecked" checked>
+          <label class="form-check-label" for="flexSwitchCheckChecked">Checked switch checkbox input</label>
+        </div>-->
+
+        {% csrf_token %}
+        {{ form }}
+    </div>
+    <div class="form-row my-3 text-center">
+        <p class="text-muted"> By proceeding, you agree to share your above information to {{sso_client.name }} </p>
+        <input type="submit" value="Confirm and Connect" class="btn btn-primary  d-inline w-50">
+    </div>
+</form>
+
+</div>
+{% endblock %}
