@@ -6,7 +6,11 @@ from apps.sso.models import Client, Feature, AuthTransaction, AccessAgreement
 
 # Register your models here.
 
-admin.site.register(Client)
+class ClientAdmin(admin.ModelAdmin):
+    readonly_fields = ('app_key', 'app_secret', )
+
+
+admin.site.register(Client, ClientAdmin)
 admin.site.register(Feature)
 
 class ReadOnlyAdmin(admin.ModelAdmin):
