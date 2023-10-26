@@ -1,20 +1,19 @@
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import LoginView
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views import View
 from django.views.generic import RedirectView
-from django.views.generic.edit import ProcessFormView, ModelFormMixin, UpdateView
+from django.views.generic.edit import ProcessFormView, ModelFormMixin, UpdateView, FormMixin
 
 from apps.sso.facade import SSOService
-from apps.sso.forms import AccessAgreementPermissionForm
+from apps.sso.forms import AccessAgreementPermissionForm, SSOAuthenticationForm
 from apps.sso.models import Client, AuthTransaction, AccessAgreement
 
 
 # Create your views here
-class WebSSO(ModelFormMixin, LoginView, ProcessFormView, ):
+class WebSSO(LoginView):
 
-    form_class = AuthenticationForm
+    form_class = SSOAuthenticationForm
     template_name = 'sso/web-login.html'
 
     def get_object(self, queryset=None):
@@ -33,7 +32,7 @@ class WebSSO(ModelFormMixin, LoginView, ProcessFormView, ):
         Usually, other system allows authentication, even when we donot have a client, and will redirect to native dashboard.
         Since we are concentrating only on authentication service, we
         """
-        self.client = self.get_object()
+        self.object = self.client = self.get_object()
         if self.request.user.is_authenticated:
             return redirect(self.next_level(user=self.request.user, has_already_completed=True))
         return super().get(request, *args, **kwargs)
@@ -43,9 +42,7 @@ class WebSSO(ModelFormMixin, LoginView, ProcessFormView, ):
         Usually, other system allows authentication, even when we donot have a client, and will redirect to native dashboard.
         Since we are concentrating only on authentication service, we
         """
-        if 'apikey' not in request.GET:
-            return self.invalid_api_key()
-        self.client = self.get_object()
+        self.object = self.client = self.get_object()
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -128,7 +125,7 @@ class WebSSOAPIView(View):
         self.service = SSOService(**kwargs)
         data, status = self.service.serialize_for_client(client=self.client, txn_id=self.kwargs['txn_token'])
         print(data)
-        return JsonResponse(data, status=status)
+        return JsonResponse(data, status=status,)
 
 
 

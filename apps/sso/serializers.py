@@ -80,7 +80,7 @@ class ResponseSerializer(object):
         r: dict = resp_structure('VERIFIED', txn_id=self.txn_id, txn_date=self.txn and self.txn.created_at)
         features = self.txn.get_permissions()
         r['auth'] = {
-            'permitted_features': features,
+            'permitted_features': list(features),
             'features': {feature: call_or_draw(self.txn.agreement.user, feature) for feature in features}
         }
         return r

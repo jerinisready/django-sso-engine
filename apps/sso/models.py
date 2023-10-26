@@ -93,6 +93,9 @@ class AccessAgreement(models.Model):
         self.signed_at = timezone.now()
         self.save()
 
+    def __str__(self):
+        return f'{self.client} - {self.user}'
+
     class Meta:
         unique_together = ('client', 'user',)
 
@@ -114,6 +117,9 @@ class AuthTransaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f'{self.txn_token} ({self.state_label})'
+
     def save(self, **kwargs):
         if not self.txn_token:
             self.generate_token()
@@ -121,6 +127,18 @@ class AuthTransaction(models.Model):
 
     def generate_token(self):
         self.txn_token = "txn-" + str(uuid4())[:32]
+
+    @property
+    def state_label(self):
+        return settings.SSO_STATE_LABELS[self.state]
+
+    @property
+    def client(self):
+        return self.agreement.client
+
+    @property
+    def user(self):
+        return self.agreement.user
 
     def set_state(self, to_state):
         if to_state in settings.SSO_STATE_TRANSACTIONS[self.state]:

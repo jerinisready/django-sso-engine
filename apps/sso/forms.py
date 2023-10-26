@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
 from django.forms import CheckboxSelectMultiple
 
 from apps.sso.models import AccessAgreement, Feature
@@ -6,6 +7,22 @@ from apps.sso.models import AccessAgreement, Feature
 
 class BootstrapCheckboxSelectMultiple(CheckboxSelectMultiple):
     template_name = 'sso/bootstrap-fields/checkbox-select.html'
+
+
+placeholders = {
+    'username': 'eg: John.Doe2',
+    'password': '*******'
+}
+
+
+class SSOAuthenticationForm(AuthenticationForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control mb-3'})
+            self.fields[field].widget.attrs.update({'placeholder': placeholders.get(field, field)})
+
 
 
 class AccessAgreementPermissionForm(forms.ModelForm):

@@ -2,20 +2,28 @@
 
 {% block sso_header_col %}
     <img src="https://www.mindcentric.com/hubfs/SingleSignOn.png" alt="" height="120" width="auto">
-    <h1>Sign in</h1>
-    <p>with your Organization Account</p>
+        <h1>Sign in</h1>
+    <p>Hey there, <span class="text-primary">{{ sso_client.name }}</span> wants you to login to your account.</p>
 {% endblock %}
 
 
 {% block sso_body_col %}
-<form action="">
-    {% csrf_token %}
-    {{ form }}
-    <p>
-        <a class="link-primary"  href="">Forget Password?</a>
-    </p>
-    <div class="form-row">
-        <input type="submit" value="Next" class="btn btn-primary float-right d-inline">
+<form action="" method="post">
+    <div class="row">
+
+        <div class="col-md-8 offset-md-2">
+            <fieldset class="border rounded p-3">
+                {% csrf_token %}
+                {{ form }}
+                <div class="form-row py-3 text-center">
+                    <input type="submit" value="Continue" class="btn btn-primary float-right d-inline w-50">
+                </div>
+            </fieldset>
+            <p class="py-2 text-center">
+                <a class="link-primary "  href="">Forget Password</a> ?
+            </p>
+
+        </div>
     </div>
 </form>
 {% endblock %}
